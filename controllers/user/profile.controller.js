@@ -98,42 +98,44 @@ class User extends Image {
       });
     }
   };
-  static ultimateFollow = async (req,res)=>{
+  static ultimateFollow = async (req, res) => {
     const userId = req.user._id;
     const compId = req.params.id;
-    let isFollowed=false
+    let isFollowed = false
 
     try {
-      let followObject = await followModel.findOne({followerId:userId});
-      if(!followObject){
-        followObject=await followModel.create({followerId:userId,companyId:compId})
-        isFollowed=true;
-      }else if(followObject){
-        let isFound =false
-        followObject.companyId.forEach((e)=>{
-          if(e.toString() == compId.toString()){
+      let followObject = await followModel.findOne({ followerId: userId });
+      if (!followObject) {
+        followObject = await followModel.create({ followerId: userId, companyId: compId })
+        isFollowed = true;
+      } else if (followObject) {
+        let isFound = false
+        followObject.companyId.forEach((e) => {
+          if (e.toString() == compId.toString()) {
             console.log("we erach here")
             isFound = true
           }
         })
-        
-        if (!isFound){ followObject.companyId.push(compId);
-        isFollowed=true
+
+        if (!isFound) {
+          followObject.companyId.push(compId);
+          isFollowed = true
         }
-        else
-        {  let companies = []
+        else {
+          let companies = []
           followObject.companyId.forEach(element => {
-            if(element.toString() != compId.toString()){
+            if (element.toString() != compId.toString()) {
               companies.push(element)
-              
+
             }
           });
-          followObject.companyId = companies}
+          followObject.companyId = companies
+        }
       }
       await followObject.save();
 
 
-      res.send({ followObject,isFollowed });
+      res.send({ followObject, isFollowed });
     } catch (error) {
       res.status(400).send({
         apiStatus: false,
@@ -246,13 +248,13 @@ class User extends Image {
 
 
       let states = State.getStatesOfCountry(CountryReq[0].isoCode);
-let cities =[]
+      let cities = []
       states.forEach((state) => {
-       
-          cities.push(  state.name.replace(" Governorate", ""))
-        
+
+        cities.push(state.name.replace(" Governorate", ""))
+
       });
-     
+
 
       res.status(201).send(cities);
     } catch (e) {
@@ -341,8 +343,9 @@ let cities =[]
   }
   static search = async (req, res) => {
     try {
+      console.log("dsadqwe");
       const query = req.body.search;
-      let resulSearch = []
+      let resulSearch = { users: [], companies: [] }
       const regex = new RegExp(query, 'i');
       const users = await userModel.find({
         $or: [
@@ -360,27 +363,19 @@ let cities =[]
         ]
       });
       if (users) {
-        let user={}
         users.forEach(element => {
-              user.data = element
-                  user.type ="user"
-
-        
+          resulSearch.users.push(element)
         });
-        resulSearch.push({user: user})
       }
       if (companies) {
-        let company ={}
+        let company = {}
         companies.forEach(element => {
-          company = element
-      
-    
-    });
-    company.type ="company"
-    resulSearch.push({company: company})
+          resulSearch.companies.push(element)
+       
+        });
+
       }
-console.log(resulSearch)
-      res.status(200).send(resulSearch)
+      res.status(200).send({ users:resulSearch.users, companies:resulSearch.companies })
     } catch (err) {
       res.status(400).send({
         apiStatus: false,
@@ -388,6 +383,6 @@ console.log(resulSearch)
       });
     }
   }
-  
+
 }
 module.exports = User;
